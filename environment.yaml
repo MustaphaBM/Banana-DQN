@@ -1,0 +1,11 @@
+name : drlnd
+channels : 
+  - default
+dependencies: 
+  - python=3.6
+  - pip :
+    - torch
+    - matplotlib
+    - unityagents==0.4.0
+    - numpy>=1.11.0
+    - scipy
