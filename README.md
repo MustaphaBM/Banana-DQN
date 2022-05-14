@@ -16,7 +16,8 @@ For this project, you will train an agent to navigate (and collect bananas!) in 
 
 2. Create a conda environment where all the dependencies will be installed 
     > conda env create -f environment.yaml
-    > conda activate environment.yamk
+    
+    > conda activate environment.yaml
 
 ### Getting Started
 
