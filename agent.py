@@ -7,13 +7,12 @@ import torch.optim as optim
 
 from buffer import ReplayBuffer
 from nn_model import QNetwork
-from parameters import HyperParameters
 
 
 class Agent:
     """Interacts with and learns from the environment."""
 
-    def __init__(self, state_size, action_size, seed):
+    def __init__(self, state_size, action_size, seed, agent_hyperparams):
         """Initialize an Agent object.
 
         Params
@@ -22,32 +21,37 @@ class Agent:
             action_size (int): the number of actions
             seed (int): random seed
         """
-        self.params = HyperParameters
         self.state_size = state_size
         self.action_size = action_size
         self.seed = random.seed(seed)
-
+        self.params = agent_hyperparams
         self.qnetwork_local = QNetwork(state_size, action_size, seed).to(
-            self.params.device
+            self.params["device"]
         )
         self.qnetwork_target = QNetwork(state_size, action_size, seed).to(
-            self.params.device
+            self.params["device"]
         )
-        self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=self.params.lr)
+        self.optimizer = optim.Adam(
+            self.qnetwork_local.parameters(), lr=self.params["LR"]
+        )
 
         self.memory = ReplayBuffer(
-            action_size, self.params.BUFFER_SIZE, self.params.BATCH_SIZE, seed
+            action_size,
+            self.params["BUFFER_SIZE"],
+            self.params["BATCH_SIZE"],
+            seed,
+            self.params["device"],
         )
         self.t_step = 0
 
     def step(self, state, action, reward, next_state, done):
         self.memory.add(state, action, reward, next_state, done)
 
-        self.t_step = (self.t_step + 1) % self.params.UPDATE_EVERY
+        self.t_step = (self.t_step + 1) % self.params["UPDATE_EVERY"]
         if self.t_step == 0:
-            if len(self.memory) > self.params.BATCH_SIZE:
+            if len(self.memory) > self.params["BATCH_SIZE"]:
                 experiences = self.memory.sample()
-                self.learn(experiences, self.params.GAMMA)
+                self.learn(experiences, self.params["GAMMA"])
 
     def act(self, state, eps=0.0):
         """Returns actions for given state as per current policy.
@@ -57,7 +61,7 @@ class Agent:
             state (array_like): current state
             eps (float): epsilon, for epsilon-greedy action selection
         """
-        state = torch.from_numpy(state).float().unsqueeze(0).to(self.params.device)
+        state = torch.from_numpy(state).float().unsqueeze(0).to(self.params["device"])
         self.qnetwork_local.eval()
         with torch.no_grad():
             action_values = self.qnetwork_local(state)
@@ -90,7 +94,7 @@ class Agent:
         loss.backward()
         self.optimizer.step()
 
-        self.soft_update(self.qnetwork_local, self.qnetwork_target, self.params.TAU)
+        self.soft_update(self.qnetwork_local, self.qnetwork_target, self.params["TAU"])
 
     def soft_update(self, local_model, target_model, tau):
         """Soft update model parameters.
